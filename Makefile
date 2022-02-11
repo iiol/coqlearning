@@ -1,4 +1,4 @@
-%: Makefile.coq
+all clean cleanall: Makefile.coq
 	$(MAKE) -f $< $@
 
 Makefile.coq: _CoqProject
