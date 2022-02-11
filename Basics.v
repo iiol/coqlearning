@@ -900,9 +900,8 @@ Check ((0 + 1) + 1) : nat.
 
 Fixpoint eqb (n m : nat) : bool :=
   match n, m with
-  | O, O => false
-  | O, S _ => false
-  | S _, O => false
+  | O, O => true 
+  | O, S _ | S _, O => false
   | S n', S m' => eqb n' m'
   end.
 
