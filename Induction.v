@@ -199,22 +199,34 @@ Proof.
 Theorem mul_0_r : forall n:nat,
   n * 0 = 0.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n. induction n.
+  - reflexivity.
+  - simpl. rewrite IHn. reflexivity.
+Qed.
 
 Theorem plus_n_Sm : forall n m : nat,
   S (n + m) = n + (S m).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n m. induction n.
+  - reflexivity.
+  - simpl. rewrite IHn. reflexivity.
+Qed.
 
 Theorem add_comm : forall n m : nat,
   n + m = m + n.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n m. induction n.
+  - rewrite add_0_r. reflexivity.
+  - simpl. rewrite <- plus_n_Sm, IHn. reflexivity.
+Qed.
 
 Theorem add_assoc : forall n m p : nat,
   n + (m + p) = (n + m) + p.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n m p. induction n.
+  - simpl. reflexivity.
+  - simpl. rewrite IHn. reflexivity.
+Qed.
 (** [] *)
 
 (** **** Exercise: 2 stars, standard (double_plus)
@@ -227,11 +239,30 @@ Fixpoint double (n:nat) :=
   | S n' => S (S (double n'))
   end.
 
+Lemma double_n_is_plus_n_n :
+  forall n, double n = plus n n.
+Proof.
+  intros n. induction n.
+  - reflexivity.
+  - simpl. rewrite <- plus_n_Sm, IHn. reflexivity.
+Qed.
+
+Lemma double_plus_eq_mult :
+  forall n, double n = mult 2 n.
+Proof.
+  intros n. destruct n.
+  - reflexivity.
+  - simpl. rewrite add_0_r, <- plus_n_Sm, double_n_is_plus_n_n. reflexivity.
+Qed.
+
 (** Use induction to prove this simple fact about [double]: *)
 
 Lemma double_plus : forall n, double n = n + n .
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n. induction n.
+  - reflexivity.
+  - simpl. rewrite <- plus_n_Sm, IHn. reflexivity.
+Qed.
 (** [] *)
 
 (** **** Exercise: 2 stars, standard, optional (even_S)
@@ -246,7 +277,10 @@ Proof.
 Theorem even_S : forall n : nat,
   even (S n) = negb (even n).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n. simpl. induction n.
+  - reflexivity.
+  - simpl. rewrite IHn, negb_involutive. reflexivity.
+Qed.
 (** [] *)
 
 (** **** Exercise: 1 star, standard, optional (destruct_induction)
@@ -482,16 +516,32 @@ Definition manual_grade_for_add_comm_informal : option (nat*string) := None.
 Theorem add_shuffle3 : forall n m p : nat,
   n + (m + p) = m + (n + p).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n m p. rewrite! add_assoc.
+  assert (H : n + m = m + n). { rewrite add_comm. reflexivity. }
+  rewrite H. reflexivity.
+Qed.
 
 (** Now prove commutativity of multiplication.  You will probably
     want to define and prove a "helper" theorem to be used
     in the proof of this one. Hint: what is [n * (1 + k)]? *)
 
+Theorem mul_n_Sm :
+  forall n m, n * S m = n + n * m.
+Proof.
+  intros m n. induction m.
+  - reflexivity.
+  - simpl. rewrite IHm, !add_assoc.
+    assert (H : n + m = m + n). { rewrite add_comm. reflexivity. }
+    rewrite H. reflexivity.
+Qed.
+
 Theorem mul_comm : forall m n : nat,
   m * n = n * m.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros m n. induction m.
+  - rewrite mul_0_r. reflexivity.
+  - simpl. rewrite mul_n_Sm, IHm. reflexivity.
+Qed.
 (** [] *)
 
 (** **** Exercise: 3 stars, standard, optional (more_exercises)
@@ -506,34 +556,86 @@ Proof.
 
 Check leb.
 
+Theorem n_eq_n_true :
+  forall n, (n =? n) = true.
+Proof.
+  intros n. induction n.
+  - reflexivity.
+  - simpl. rewrite IHn. reflexivity.
+Qed.
+
+Theorem n_eq_n_n_leq_n :
+  forall n, (n =? n) = true -> (n <=? n) = true.
+Proof.
+  intros n. induction n.
+  - reflexivity.
+  - simpl. apply IHn.
+Qed.
+
+(*
+Theorem n_eq_m :
+  forall n m, (n =? m) = true -> (n <=? m) = true.
+Proof.
+  intros n. induction n.
+*)
+
 Theorem leb_refl : forall n:nat,
   (n <=? n) = true.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n. induction n.
+  - reflexivity.
+  - simpl. rewrite IHn. reflexivity.
+Qed.
 
 Theorem zero_neqb_S : forall n:nat,
   0 =? (S n) = false.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  reflexivity.
+Qed.
 
 Theorem andb_false_r : forall b : bool,
   andb b false = false.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros b. destruct b. reflexivity. reflexivity.
+Qed.
 
 Theorem plus_leb_compat_l : forall n m p : nat,
   n <=? m = true -> (p + n) <=? (p + m) = true.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n m p H. induction p.
+  - simpl. apply H.
+  - simpl. rewrite IHp. reflexivity.
+Qed.
 
 Theorem S_neqb_0 : forall n:nat,
   (S n) =? 0 = false.
-Proof.
-  (* FILL IN HERE *) Admitted.
+Proof.  reflexivity.  Qed.
+
+Locate "*".
+Print Nat.mul.
 
 Theorem mult_1_l : forall n:nat, 1 * n = n.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n. destruct n.
+  - reflexivity.
+  - simpl. rewrite add_0_r. reflexivity.
+Qed.
+
+Theorem not_nb_and_nc :
+  forall b c, negb (andb (negb b) (negb c)) = orb b c.
+Proof.
+  intros b c. destruct b.
+  - reflexivity.
+  - simpl. rewrite negb_involutive. reflexivity.
+Qed.
+
+Theorem b_or_nb :
+  forall b, orb b (negb b) = true.
+Proof.
+  intros b. destruct b.
+  - reflexivity.
+  - reflexivity.
+Qed.
 
 Theorem all3_spec : forall b c : bool,
   orb
@@ -542,17 +644,27 @@ Theorem all3_spec : forall b c : bool,
          (negb c))
   = true.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros b c. assert (H : orb (negb b) (negb c) = negb (andb b c)). {
+    rewrite <- not_nb_and_nc, !negb_involutive. reflexivity.
+  }
+  rewrite H, b_or_nb. reflexivity.
+Qed.
 
 Theorem mult_plus_distr_r : forall n m p : nat,
   (n + m) * p = (n * p) + (m * p).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n m p. induction n.
+  - reflexivity.
+  - simpl. rewrite IHn, add_assoc. reflexivity.
+Qed.
 
 Theorem mult_assoc : forall n m p : nat,
   n * (m * p) = (n * m) * p.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n m p. induction n.
+  - reflexivity.
+  - simpl. rewrite IHn, mult_plus_distr_r. reflexivity.
+Qed.
 (** [] *)
 
 (** **** Exercise: 2 stars, standard, optional (eqb_refl) *)
@@ -560,7 +672,10 @@ Proof.
 Theorem eqb_refl : forall n : nat,
   (n =? n) = true.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n. induction n.
+  - reflexivity.
+  - simpl. apply IHn.
+Qed.
 (** [] *)
 
 (** **** Exercise: 2 stars, standard, optional (add_shuffle3')
@@ -577,7 +692,10 @@ Proof.
 Theorem add_shuffle3' : forall n m p : nat,
   n + (m + p) = m + (n + p).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n m p. rewrite !add_assoc. replace (m + n) with (n + m).
+  - reflexivity.
+  - apply add_comm.
+Qed.
 (** [] *)
 
 (** **** Exercise: 3 stars, standard, especially useful (binary_commute)
@@ -606,7 +724,28 @@ Proof.
     want to change your original definitions to make the property
     easier to prove, feel free to do so! *)
 
-(* FILL IN HERE *)
+Fixpoint incr (m:bin) : bin :=
+  match m with
+  | Z => B1 Z
+  | B0 m' => B1 m'
+  | B1 m' => B0 (incr m')
+  end.
+
+Fixpoint bin_to_nat (m:bin) : nat :=
+  match m with
+  | Z => O
+  | B0 m' => mult 2 (bin_to_nat m')
+  | B1 m' => S (mult 2 (bin_to_nat m'))
+  end.
+
+Theorem bin_to_nat_pre_incr :
+  forall b, S (bin_to_nat b) = bin_to_nat (incr b).
+Proof.
+  intros b. induction b.
+  - reflexivity.
+  - reflexivity.
+  - simpl. rewrite <- IHb, !add_0_r, <- !plus_n_Sm. simpl. reflexivity.
+Qed.
 
 (* Do not modify the following line: *)
 Definition manual_grade_for_binary_commute : option (nat*string) := None.
@@ -621,8 +760,11 @@ Definition manual_grade_for_binary_commute : option (nat*string) := None.
     (a) First, write a function to convert natural numbers to binary
         numbers. *)
 
-Fixpoint nat_to_bin (n:nat) : bin
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+Fixpoint nat_to_bin (n:nat) : bin :=
+  match n with
+  | O => Z
+  | S n' => incr (nat_to_bin n')
+  end.
 
 (** Prove that, if we start with any [nat], convert it to binary, and
     convert it back, we get the same [nat] we started with.  (Hint: If
@@ -630,9 +772,21 @@ Fixpoint nat_to_bin (n:nat) : bin
     may need to prove a subsidiary lemma showing how such functions
     relate to [nat_to_bin].) *)
 
+Lemma bin_to_nat_incr :
+  forall b, bin_to_nat (incr b) = S (bin_to_nat b).
+Proof.
+  intros b. induction b.
+  - reflexivity.
+  - reflexivity.
+  - simpl. rewrite !add_0_r, !IHb, <- !plus_n_Sm. reflexivity.
+Qed.
+
 Theorem nat_bin_nat : forall n, bin_to_nat (nat_to_bin n) = n.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n. induction n.
+  - reflexivity.
+  - simpl. rewrite bin_to_nat_incr, IHn. reflexivity.
+Qed.
 
 (* Do not modify the following line: *)
 Definition manual_grade_for_binary_inverse_a : option (nat*string) := None.
@@ -641,7 +795,7 @@ Definition manual_grade_for_binary_inverse_a : option (nat*string) := None.
         opposite direction -- that starting with a binary number,
         converting to a natural, and then back to binary should yield
         the same number we started with.  However, this is not the
-        case!  Explain (in a comment) what the problem is. *)
+        case! Explain (in a comment) what the problem is. *)
 
 (* FILL IN HERE *)
 
@@ -661,6 +815,84 @@ Definition manual_grade_for_binary_inverse_b : option (nat*string) := None.
         define this using [nat_to_bin] and [bin_to_nat]! *)
 
 (* FILL IN HERE *)
+(* TODO: Complite the exercise *)
+Fixpoint bin_is_0 (b : bin) : bool :=
+  match b with
+  | Z => true
+  | B0 b' => bin_is_0 b'
+  | B1 b' => false
+  end.
+
+Fixpoint bin_normalize (b : bin) : bin :=
+  match b with
+  | Z => Z
+  | B0 b' => if bin_is_0 b' then Z else B0 (bin_normalize b')
+  | B1 b' => B1 (bin_normalize b')
+  end.
+
+(* Merge bin_is_0 with bin_normalize *)
+Fixpoint bin_normalize' (b : bin) : bin :=
+  match b with
+  | Z => Z
+  | B0 b' => match bin_normalize' b' with
+             | Z => Z
+             | b'' => B0 b''
+             end
+  | B1 b' => B1 (bin_normalize' b')
+  end.
+
+(*
+TODO: continue prooving
+Lemma nat_to_bin_n_n :
+  forall n, nat_to_bin (n + n) = B0 (nat_to_bin n).
+Proof.
+  intros n. induction n.
+Admitted.
+
+Theorem bin_normalize_prooving' :
+  forall b, bin_normalize' b = nat_to_bin (bin_to_nat b).
+Proof.
+  intros b. induction b.
+  - reflexivity.
+  - simpl. rewrite add_0_r, IHb.
+    destruct b eqn:E.
+    + reflexivity.
+    + simpl. rewrite add_0_r, !nat_to_bin_n_n. reflexivity.
+    + simpl. rewrite <- plus_n_Sm. simpl. rewrite add_0_r, !nat_to_bin_n_n.
+      reflexivity.
+  - simpl. rewrite add_0_r, nat_to_bin_n_n, <- IHb. reflexivity.
+Qed.
+
+Lemma bin_normalize_bin_is_0 :
+  forall b, bin_is_0 b = true -> bin_normalize' b = Z.
+Proof.
+  intros b. induction b.
+  - reflexivity.
+  - simpl. intros H. rewrite IHb.
+    + reflexivity.
+    + apply H.
+  - simpl. discriminate.
+Qed.
+
+(* Prove that merging was correct *)
+Theorem bin_normalize_merging :
+  forall b, bin_normalize b = bin_normalize' b.
+Proof.
+  intros b. induction b.
+  - reflexivity.
+  - simpl. destruct (bin_is_0 b) eqn:E.
+    + rewrite bin_normalize_bin_is_0.
+      * reflexivity.
+      * apply E.
+    + simpl. destruct (bin_normalize' b).
+*)
+
+Compute bin_normalize (B0 (B0 (B0 Z))).
+Compute bin_normalize (B0 (B0 (B0 (B0 Z)))).
+Compute bin_normalize (B0 (B1 (B0 (B0 Z)))).
+Compute bin_normalize (B0 (B0 (B1 (B0 Z)))).
+Compute bin_normalize (B1 (B0 (B1 (B0 (B1 (B0 (B0 Z))))))).
+
 
 (* Do not modify the following line: *)
 Definition manual_grade_for_binary_inverse_c : option (nat*string) := None.
