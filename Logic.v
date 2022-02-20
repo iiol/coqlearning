@@ -672,7 +672,13 @@ Proof.
 Theorem and_distributes_over_or: forall P Q R : Prop,
   P /\ (Q \/ R) <-> (P /\ Q) \/ (P /\ R).
 Proof.
-Admitted.
+  intros P Q R. split.
+  - intros [Hp [Hq|Hr]].
+    + left. split. apply Hp. apply Hq.
+    + right. split. apply Hp. apply Hr.
+  - intros [[Hp Hq]|[Hp Hr]].
+    + split. apply Hp. left. apply Hq.
+    + split. apply Hp. right. apply Hr.  Qed.
 
 (* ================================================================= *)
 (** ** Setoids and Logical Equivalence *)
@@ -1130,7 +1136,6 @@ Qed.
 
     The following theorem says: any list [l] containing some element
     must be nonempty. *)
-
 Theorem in_not_nil :
   forall A (x : A) (l : list A), In x l -> l <> [].
 Proof.
@@ -1298,6 +1303,15 @@ Proof.
   apply add_comm.
 Qed.
 
+Axiom false_axiom : 0 = 1.
+
+Example false_axiom_example :
+  forall x, x = 0.
+Proof.
+  intros x. induction x.
+  - reflexivity.
+  - rewrite IHx. symmetry. apply false_axiom.  Qed.
+
 (** Naturally, we must be careful when adding new axioms into Coq's
     logic, as this can render it _inconsistent_ -- that is, it may
     become possible to prove every proposition, including [False],
@@ -1350,9 +1364,21 @@ Definition tr_rev {X} (l : list X) : list X :=
 
     Prove that the two definitions are indeed equivalent. *)
 
+Theorem rev_append_app :
+  forall X l lr, @rev_append X l lr = rev_append l [] ++ lr.
+Proof.
+  intros X l. induction l.
+  - reflexivity.
+  - intros lr. simpl. rewrite IHl, (IHl [x]).
+    rewrite <- app_assoc. simpl. reflexivity.  Qed.
+
 Theorem tr_rev_correct : forall X, @tr_rev X = @rev X.
 Proof.
-(* FILL IN HERE *) Admitted.
+  intros X. apply functional_extensionality.
+  intros x. unfold tr_rev.
+  induction x as [| h t IHl].
+  - reflexivity.
+  - simpl. rewrite <- IHl. apply rev_append_app.  Qed.
 (** [] *)
 
 (* ================================================================= *)
@@ -1553,6 +1579,18 @@ Qed.
 
 Example not_even_1001' : ~(Even 1001).
 Proof.
+  (*
+  unfold not.
+  intro H.
+  apply even_bool_prop in H.
+  discriminate.
+  *)
+  (*
+  rewrite <- even_bool_prop.
+  unfold not.
+  discriminate.
+  *)
+
   (* WORKED IN CLASS *)
   rewrite <- even_bool_prop.
   unfold not.
@@ -1594,12 +1632,28 @@ Qed.
 Theorem andb_true_iff : forall b1 b2:bool,
   b1 && b2 = true <-> b1 = true /\ b2 = true.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros b1 b2. split.
+  - destruct b1.
+    + simpl. intro H. rewrite H. split. reflexivity. reflexivity.
+    + simpl. discriminate.
+  - intros [H1 H2]. rewrite H1, H2. reflexivity.  Qed.
+
+Lemma or_true_r :
+  forall b, b || true = true.
+Proof.
+  intros [|]. reflexivity. reflexivity.  Qed.
+
 
 Theorem orb_true_iff : forall b1 b2,
   b1 || b2 = true <-> b1 = true \/ b2 = true.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros b1 b2. split.
+  - destruct b1.
+    + simpl. left. reflexivity.
+    + simpl. intros H. right. apply H.
+  - intros [H|H].
+    + rewrite H. reflexivity.
+    + rewrite H. apply or_true_r.  Qed.
 (** [] *)
 
 (** **** Exercise: 1 star, standard (eqb_neq)
@@ -1623,8 +1677,14 @@ Proof.
     definition is correct, prove the lemma [eqb_list_true_iff]. *)
 
 Fixpoint eqb_list {A : Type} (eqb : A -> A -> bool)
-                  (l1 l2 : list A) : bool
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+                  (l1 l2 : list A) : bool :=
+  match l1, l2 with
+  | nil, nil => true
+  | nil, _ | _, nil => false
+  | (h1 :: t1), (h2 :: t2) => if eqb h1 h2
+                              then eqb_list eqb t1 t2
+                              else false
+  end.
 
 Theorem eqb_list_true_iff :
   forall A (eqb : A -> A -> bool),
@@ -1652,7 +1712,9 @@ Fixpoint forallb {X : Type} (test : X -> bool) (l : list X) : bool :=
 Theorem forallb_true_iff : forall X test (l : list X),
   forallb test l = true <-> All (fun x => test x = true) l.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros X f l. induction l as [| h t IHl].
+  - split. reflexivity. reflexivity.
+  - simpl. rewrite andb_true_iff. rewrite IHl. reflexivity.  Qed.
 
 (** (Ungraded thought question) Are there any important properties of
     the function [forallb] which are not captured by this
@@ -1794,10 +1856,12 @@ Qed.
     (Hint: You may need to come up with a clever assertion as the
     next step in the proof.) *)
 
+Search (_ \/ ~ _).
 Theorem excluded_middle_irrefutable: forall (P:Prop),
   ~ ~ (P \/ ~ P).
 Proof.
-  unfold not. intros P H.
+  Check restricted_excluded_middle.
+  unfold not. intros P []. apply (restricted_excluded_middle P true).
   (* FILL IN HERE *) Admitted.
 (** [] *)
 
